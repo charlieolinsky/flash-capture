@@ -6,7 +6,11 @@
 
 Lightweight desktop flashcards for learning while you work. Highlight text anywhere, hit a global hotkey, write a quick question, and save a card locally.
 
-**macOS primary · Windows-ready · MIT licensed**
+**macOS primary · MIT licensed**
+
+> **Notice:** This project was built with AI assistance (Grok Build). Treat it as an early prototype: review the code before relying on it, and expect rough edges.
+>
+> **Windows:** The app is written to target Windows as well as macOS, but **Windows builds and runtime behavior are untested** as of this release. macOS is the supported / verified platform today.
 
 ## Features
 
@@ -21,7 +25,7 @@ Lightweight desktop flashcards for learning while you work. Highlight text anywh
 
 - [Node.js](https://nodejs.org/) 18+
 - [Rust](https://rustup.rs/) (stable)
-- macOS or Windows
+- macOS (verified). Windows may work via Tauri but is **untested**.
 
 ### macOS Accessibility
 
@@ -53,8 +57,8 @@ Artifacts land under `src-tauri/target/release/bundle/`:
 
 | Platform | Output |
 |----------|--------|
-| macOS | `macos/FlashCapture.app`, `dmg/*.dmg` |
-| Windows | `.msi` / `.exe` (build on Windows) |
+| macOS | `macos/FlashCapture.app`, `dmg/*.dmg` (verified) |
+| Windows | `.msi` / `.exe` when built on Windows (**untested**) |
 
 ## Data location
 
