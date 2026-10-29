@@ -85,21 +85,21 @@ export default function SettingsPanel({
   }
 
   return (
-    <div style={{ maxWidth: 720 }}>
-      <h2 style={{ marginTop: 0 }}>Settings</h2>
+    <div style={{ maxWidth: 820 }}>
+      <h2 style={{ marginTop: 0, fontSize: "1.55rem" }}>Settings</h2>
       {message && <p style={{ color: "var(--good)" }}>{message}</p>}
       {error && <p style={{ color: "var(--bad)" }}>{error}</p>}
 
-      <div className="panel" style={{ padding: "1rem", marginBottom: "1rem" }}>
-        <h3 style={{ marginTop: 0 }}>Capture hotkey</h3>
-        <p className="muted" style={{ fontSize: "0.9rem" }}>
+      <div className="panel" style={{ padding: "1.35rem 1.45rem", marginBottom: "1.25rem" }}>
+        <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>Capture hotkey</h3>
+        <p className="muted" style={{ fontSize: "1rem", lineHeight: 1.55 }}>
           Default is <code>CommandOrControl+Shift+F</code>. On macOS, grant Accessibility so FlashCapture can
           simulate Copy for your selection. If you run via <code>npm run tauri dev</code>, enable Accessibility
           for your <strong>terminal app</strong> (Terminal / iTerm / Cursor) as well as FlashCapture.
         </p>
         <input className="field" value={hotkey} onChange={(e) => setHotkey(e.target.value)} />
-        <div style={{ marginTop: "0.75rem" }}>
-          <label className="muted" style={{ fontSize: "0.8rem" }}>
+        <div style={{ marginTop: "1rem" }}>
+          <label className="muted field-label">
             Default deck
           </label>
           <select className="field" value={defaultDeckId} onChange={(e) => setDefaultDeckId(e.target.value)}>
@@ -110,8 +110,8 @@ export default function SettingsPanel({
             ))}
           </select>
         </div>
-        <div style={{ marginTop: "0.75rem" }}>
-          <label className="muted" style={{ fontSize: "0.8rem" }}>
+        <div style={{ marginTop: "1rem" }}>
+          <label className="muted field-label">
             Theme
           </label>
           <select className="field" value={theme} onChange={(e) => setTheme(e.target.value)}>
@@ -120,17 +120,17 @@ export default function SettingsPanel({
             <option value="dark">Dark</option>
           </select>
         </div>
-        <button className="btn btn-primary" style={{ marginTop: "1rem" }} onClick={() => void saveSettings()}>
+        <button className="btn btn-primary" style={{ marginTop: "1.15rem" }} onClick={() => void saveSettings()}>
           Save settings
         </button>
       </div>
 
-      <div className="panel" style={{ padding: "1rem", marginBottom: "1rem" }}>
-        <h3 style={{ marginTop: 0 }}>Import / Export</h3>
-        <p className="muted" style={{ fontSize: "0.9rem" }}>
+      <div className="panel" style={{ padding: "1.35rem 1.45rem", marginBottom: "1.25rem" }}>
+        <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>Import / Export</h3>
+        <p className="muted" style={{ fontSize: "1rem", lineHeight: 1.55 }}>
           Move flashcards between devices with a single JSON file.
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem" }}>
           <button className="btn btn-primary" onClick={() => void exportJson()}>
             Export JSON
           </button>
@@ -150,9 +150,9 @@ export default function SettingsPanel({
         </div>
       </div>
 
-      <div className="panel" style={{ padding: "1rem" }}>
-        <h3 style={{ marginTop: 0 }}>Local data</h3>
-        <p className="muted" style={{ fontSize: "0.9rem", wordBreak: "break-all" }}>
+      <div className="panel" style={{ padding: "1.35rem 1.45rem" }}>
+        <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>Local data</h3>
+        <p className="muted" style={{ fontSize: "1rem", wordBreak: "break-all", lineHeight: 1.5 }}>
           {dataDir}
         </p>
         <button className="btn" onClick={() => void api.triggerCapture()}>

@@ -14,10 +14,10 @@
       {
         "label": "main",
         "title": "FlashCapture",
-        "width": 1100,
-        "height": 720,
-        "minWidth": 800,
-        "minHeight": 560,
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 620,
         "visible": true
       }
     ],

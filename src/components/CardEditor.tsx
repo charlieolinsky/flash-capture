@@ -59,20 +59,30 @@ export default function CardEditor({
   }
 
   return (
-    <form className="panel" style={{ padding: "1rem", marginBottom: "1rem" }} onSubmit={submit}>
-      <h3 style={{ marginTop: 0 }}>{card ? "Edit card" : "New card"}</h3>
+    <form className="panel" style={{ padding: "1.35rem 1.45rem", marginBottom: "1.25rem" }} onSubmit={submit}>
+      <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>{card ? "Edit card" : "New card"}</h3>
       {error && <p style={{ color: "var(--bad)" }}>{error}</p>}
-      <label className="muted" style={{ fontSize: "0.8rem" }}>
+      <label className="muted field-label">
         Question
       </label>
       <textarea className="field" rows={3} value={question} onChange={(e) => setQuestion(e.target.value)} required />
-      <label className="muted" style={{ fontSize: "0.8rem", display: "block", marginTop: "0.75rem" }}>
+      <label className="muted field-label" style={{ marginTop: "1rem" }}>
         Answer
       </label>
-      <textarea className="field" rows={4} value={answer} onChange={(e) => setAnswer(e.target.value)} required />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginTop: "0.75rem" }}>
+      <textarea
+        className="field"
+        rows={6}
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        placeholder={'Wrap code in fences:\n```go\nfmt.Println("ok")\n```'}
+        required
+      />
+      <p className="muted" style={{ fontSize: "0.85rem", margin: "0.4rem 0 0" }}>
+        Use ```language fences for code blocks, and `backticks` for inline code.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
         <div>
-          <label className="muted" style={{ fontSize: "0.8rem" }}>
+          <label className="muted field-label">
             Deck
           </label>
           <select className="field" value={deckId} onChange={(e) => setDeckId(e.target.value)}>
@@ -84,13 +94,13 @@ export default function CardEditor({
           </select>
         </div>
         <div>
-          <label className="muted" style={{ fontSize: "0.8rem" }}>
+          <label className="muted field-label">
             Tags
           </label>
           <input className="field" value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="comma, separated" />
         </div>
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "1rem" }}>
+      <div style={{ display: "flex", gap: "0.65rem", justifyContent: "flex-end", marginTop: "1.2rem" }}>
         <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>

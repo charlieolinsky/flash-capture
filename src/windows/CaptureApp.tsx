@@ -118,12 +118,12 @@ export default function CaptureApp() {
   }
 
   return (
-    <div style={{ padding: "1rem", height: "100%", overflow: "auto" }}>
-      <form onSubmit={onSubmit} className="panel" style={{ padding: "1rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem" }}>
+    <div style={{ padding: "1.15rem", height: "100%", overflow: "auto" }}>
+      <form onSubmit={onSubmit} className="panel" style={{ padding: "1.2rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "1rem" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: "1.1rem" }}>Quick Capture</h1>
-            <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.85rem" }}>
+            <h1 style={{ margin: 0, fontSize: "1.25rem" }}>Quick Capture</h1>
+            <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.95rem" }}>
               Highlighted text is the answer. Write the question.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function CaptureApp() {
           </div>
         )}
 
-        <label className="muted" style={{ display: "block", marginBottom: 4, fontSize: "0.8rem" }}>
+        <label className="muted field-label">
           Question
         </label>
         <textarea
@@ -172,7 +172,7 @@ export default function CaptureApp() {
           }}
         />
 
-        <label className="muted" style={{ display: "block", margin: "0.75rem 0 4px", fontSize: "0.8rem" }}>
+        <label className="muted field-label" style={{ marginTop: "0.9rem" }}>
           Answer
         </label>
         <textarea
@@ -180,13 +180,16 @@ export default function CaptureApp() {
           rows={5}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
-          placeholder="Captured text…"
+          placeholder={'Captured text or:\n```go\nfmt.Println("ok")\n```'}
           required
         />
+        <p className="muted" style={{ fontSize: "0.85rem", margin: "0.35rem 0 0" }}>
+          Use ```language fences for code blocks.
+        </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginTop: "0.75rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.9rem", marginTop: "0.9rem" }}>
           <div>
-            <label className="muted" style={{ display: "block", marginBottom: 4, fontSize: "0.8rem" }}>
+            <label className="muted field-label">
               Deck
             </label>
             <select className="field" value={deckId} onChange={(e) => setDeckId(e.target.value)}>
@@ -198,7 +201,7 @@ export default function CaptureApp() {
             </select>
           </div>
           <div>
-            <label className="muted" style={{ display: "block", marginBottom: 4, fontSize: "0.8rem" }}>
+            <label className="muted field-label">
               Tags (comma-separated)
             </label>
             <input

@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CardEditor from "./components/CardEditor";
+import MarkdownBody from "./components/MarkdownBody";
 import QuizSession from "./components/QuizSession";
 import SettingsPanel from "./components/SettingsPanel";
 import { api } from "./lib/api";
@@ -195,7 +196,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-title">FlashCapture</div>
-          <div className="muted" style={{ fontSize: "0.8rem" }}>
+          <div className="muted" style={{ fontSize: "0.92rem", marginTop: "0.2rem" }}>
             Capture · Browse · Quiz
           </div>
         </div>
@@ -318,12 +319,12 @@ export default function App() {
             <div className="toolbar">
               <input
                 className="field"
-                style={{ maxWidth: 280 }}
+                style={{ maxWidth: 360, flex: "1 1 240px" }}
                 placeholder="Search cards…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <select className="field" style={{ maxWidth: 160 }} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+              <select className="field" style={{ maxWidth: 200 }} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
                 <option value="updated">Sort: updated</option>
                 <option value="created">Sort: created</option>
                 <option value="forgot">Sort: most forgotten</option>
@@ -362,9 +363,11 @@ export default function App() {
                   return (
                     <div key={card.id} className="card-row">
                       <div>
-                        <div style={{ fontWeight: 600, marginBottom: 4, lineHeight: 1.35 }}>{card.question}</div>
-                        <div className="muted" style={{ whiteSpace: "pre-wrap", fontSize: "0.92rem", lineHeight: 1.45 }}>
-                          {card.answer.length > 220 ? `${card.answer.slice(0, 220)}…` : card.answer}
+                        <div className="card-title">
+                          <MarkdownBody text={card.question} />
+                        </div>
+                        <div className="muted card-preview">
+                          <MarkdownBody text={card.answer} />
                         </div>
                         <div className="tag-row">
                           <span className="tag tag-static">{deckName}</span>
@@ -373,7 +376,7 @@ export default function App() {
                               {t}
                             </span>
                           ))}
-                          <span className="muted" style={{ fontSize: "0.8rem" }}>
+                          <span className="muted" style={{ fontSize: "0.9rem" }}>
                             knew {card.stats.timesKnew} · forgot {card.stats.timesForgot}
                           </span>
                         </div>

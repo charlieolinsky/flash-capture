@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Card } from "../lib/types";
+import MarkdownBody from "./MarkdownBody";
 
 interface Props {
   cards: Card[];
@@ -76,21 +77,31 @@ export default function QuizSession({ cards, onReview, onExit }: Props) {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-        <span className="muted">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <span className="muted" style={{ fontSize: "1rem" }}>
           Card {index + 1} / {ordered.length}
         </span>
         <button className="btn btn-ghost" onClick={onExit}>
           End quiz
         </button>
       </div>
-      <div className="panel quiz-card" onClick={() => setFlipped((f) => !f)} style={{ cursor: "pointer" }}>
-        <div className="muted" style={{ marginBottom: "0.75rem", fontSize: "0.85rem" }}>
+      <div
+        className="panel quiz-card"
+        style={{ cursor: "pointer" }}
+        onClick={(e) => {
+          const el = e.target as HTMLElement;
+          if (el.closest("pre, .md-inline")) return;
+          setFlipped((f) => !f);
+        }}
+      >
+        <div className="muted" style={{ marginBottom: "1rem", fontSize: "0.95rem" }}>
           {flipped ? "Answer" : "Question"} · click to flip
         </div>
-        <div className="flip-face">{flipped ? current.answer : current.question}</div>
+        <div className="flip-face">
+          <MarkdownBody text={flipped ? current.answer : current.question} />
+        </div>
       </div>
-      <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1rem" }}>
+      <div style={{ display: "flex", gap: "0.9rem", justifyContent: "center", marginTop: "1.25rem" }}>
         {!flipped ? (
           <button className="btn btn-primary" onClick={() => setFlipped(true)}>
             Show answer
