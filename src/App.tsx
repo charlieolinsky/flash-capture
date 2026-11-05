@@ -2,10 +2,19 @@ import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CardEditor from "./components/CardEditor";
 import MarkdownBody from "./components/MarkdownBody";
+import { ConfirmModal, PromptModal } from "./components/Modal";
 import QuizSession from "./components/QuizSession";
 import SettingsPanel from "./components/SettingsPanel";
 import { api } from "./lib/api";
 import type { Card, Deck, Settings, SortKey, Store, ViewMode } from "./lib/types";
+
+type PromptState =
+  | { kind: "create-deck" }
+  | { kind: "rename-deck"; deck: Deck };
+
+type ConfirmState =
+  | { kind: "delete-card"; card: Card }
+  | { kind: "delete-deck"; deck: Deck };
 
 function applyTheme(theme: string) {
   if (theme === "light" || theme === "dark") {
@@ -32,11 +41,15 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [clock, setClock] = useState<Date | null>(null);
+  const [prompt, setPrompt] = useState<PromptState | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const fingerprintRef = useRef<string>("");
 
   const refresh = useCallback(async (opts?: { force?: boolean }) => {
-    setSyncing(true);
+    // Only the user-facing Refresh button should flip into "Refreshing…".
+    const indicate = Boolean(opts?.force);
+    if (indicate) setSyncing(true);
     try {
       const [nextStore, nextSettings] = await Promise.all([
         api.getStore(),
@@ -49,10 +62,9 @@ export default function App() {
         setSettings(nextSettings);
         applyTheme(nextSettings.theme);
       }
-      setLastSyncedAt(new Date());
       setError(null);
     } finally {
-      setSyncing(false);
+      if (indicate) setSyncing(false);
     }
   }, []);
 
@@ -61,6 +73,14 @@ export default function App() {
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, [refresh]);
+
+  useEffect(() => {
+    if (loading) return;
+    const tick = () => setClock(new Date());
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [loading]);
 
   // Stay fresh: file-watcher events from Rust, focus/visibility, and a light poll backup.
   useEffect(() => {
@@ -144,31 +164,32 @@ export default function App() {
     setEditing(undefined);
   }
 
-  async function removeCard(id: string) {
-    if (!confirm("Delete this flashcard?")) return;
-    await api.deleteCard(id);
+  async function submitDeckName(name: string) {
+    if (!prompt) return;
+    if (prompt.kind === "rename-deck") {
+      await api.upsertDeck({ id: prompt.deck.id, name });
+    } else {
+      await api.upsertDeck({ name });
+    }
     await refresh();
+    setPrompt(null);
   }
 
-  async function addDeck() {
-    const name = prompt("New deck name");
-    if (!name?.trim()) return;
-    await api.upsertDeck({ name: name.trim() });
-    await refresh();
-  }
-
-  async function renameDeck(deck: Deck) {
-    const name = prompt("Rename deck", deck.name);
-    if (!name?.trim()) return;
-    await api.upsertDeck({ id: deck.id, name: name.trim() });
-    await refresh();
-  }
-
-  async function removeDeck(deck: Deck) {
-    if (!confirm(`Delete deck "${deck.name}"? Cards move to another deck.`)) return;
-    await api.deleteDeck(deck.id);
-    if (selectedDeckId === deck.id) setSelectedDeckId("all");
-    await refresh();
+  async function submitConfirm() {
+    if (!confirm) return;
+    try {
+      if (confirm.kind === "delete-card") {
+        await api.deleteCard(confirm.card.id);
+      } else {
+        await api.deleteDeck(confirm.deck.id);
+        if (selectedDeckId === confirm.deck.id) setSelectedDeckId("all");
+      }
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setConfirm(null);
+    }
   }
 
   async function handleSettingsChange(next: Settings) {
@@ -230,7 +251,7 @@ export default function App() {
               className="icon-btn"
               title="New deck"
               aria-label="New deck"
-              onClick={() => void addDeck()}
+              onClick={() => setPrompt({ kind: "create-deck" })}
             >
               +
             </button>
@@ -246,7 +267,7 @@ export default function App() {
               <button
                 className={`nav-item ${selectedDeckId === deck.id ? "active" : ""}`}
                 onClick={() => setSelectedDeckId(deck.id)}
-                onDoubleClick={() => void renameDeck(deck)}
+                onDoubleClick={() => setPrompt({ kind: "rename-deck", deck })}
                 title="Double-click to rename"
               >
                 {deck.name}
@@ -256,7 +277,7 @@ export default function App() {
                 className="icon-btn icon-btn-danger"
                 title="Delete deck"
                 aria-label={`Delete deck ${deck.name}`}
-                onClick={() => void removeDeck(deck)}
+                onClick={() => setConfirm({ kind: "delete-deck", deck })}
               >
                 ×
               </button>
@@ -306,8 +327,8 @@ export default function App() {
           </button>
           <p className="muted sidebar-meta">
             {store.cards.length} cards · {settings.hotkey}
-            {lastSyncedAt
-              ? ` · ${lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            {clock
+              ? ` · ${clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
               : ""}
           </p>
         </div>
@@ -318,19 +339,22 @@ export default function App() {
           <>
             <div className="toolbar">
               <input
-                className="field"
-                style={{ maxWidth: 360, flex: "1 1 240px" }}
+                className="field toolbar-search"
                 placeholder="Search cards…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <select className="field" style={{ maxWidth: 200 }} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+              <select
+                className="field toolbar-sort"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+              >
                 <option value="updated">Sort: updated</option>
                 <option value="created">Sort: created</option>
                 <option value="forgot">Sort: most forgotten</option>
                 <option value="reviewed">Sort: most reviewed</option>
               </select>
-              <div style={{ flex: 1 }} />
+              <div className="toolbar-spacer" />
               <button className="btn" onClick={() => setView("quiz")}>
                 Quiz filtered ({filteredCards.length})
               </button>
@@ -385,7 +409,7 @@ export default function App() {
                         <button className="btn" onClick={() => setEditing(card)}>
                           Edit
                         </button>
-                        <button className="btn" onClick={() => void removeCard(card.id)}>
+                        <button className="btn" onClick={() => setConfirm({ kind: "delete-card", card })}>
                           Delete
                         </button>
                       </div>
@@ -421,6 +445,31 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {prompt && (
+        <PromptModal
+          title={prompt.kind === "rename-deck" ? "Rename deck" : "New deck"}
+          placeholder="Deck name"
+          defaultValue={prompt.kind === "rename-deck" ? prompt.deck.name : ""}
+          confirmLabel={prompt.kind === "rename-deck" ? "Rename" : "Create"}
+          onSubmit={submitDeckName}
+          onCancel={() => setPrompt(null)}
+        />
+      )}
+      {confirm && (
+        <ConfirmModal
+          title={confirm.kind === "delete-card" ? "Delete card" : "Delete deck"}
+          message={
+            confirm.kind === "delete-card"
+              ? "Delete this flashcard? This cannot be undone."
+              : `Delete deck "${confirm.deck.name}"? Cards in it move to another deck.`
+          }
+          confirmLabel="Delete"
+          danger
+          onConfirm={submitConfirm}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
     </div>
   );
 }

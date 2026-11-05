@@ -20,6 +20,7 @@ Lightweight desktop flashcards for learning while you work. Highlight text anywh
 - **Portable JSON** — export/import your library between machines
 - **Tray app** — stays in the menu bar; closing the window hides to tray
 - **Live sync** — library reloads when `cards.json` changes (CLI / other tools)
+- **CLI + MCP** — add and manage cards from a terminal or any MCP-capable agent
 
 ## Requirements
 
@@ -76,7 +77,7 @@ Files:
 - `settings.json` — hotkey, theme, default deck
 - `cards.json.bak` — previous write backup
 
-Override with `FLASHCAPTURE_DATA_DIR` when using the companion CLI.
+Override with `FLASHCAPTURE_DATA_DIR` (desktop app, CLI, and MCP all honor this).
 
 ## JSON schema (export)
 
@@ -105,6 +106,72 @@ Override with `FLASHCAPTURE_DATA_DIR` when using the companion CLI.
 ```
 
 Use **Settings → Export JSON** / **Import merge** (or **Import replace**) to move libraries between devices.
+
+## Agent interface (CLI + MCP)
+
+The repo ships a Node CLI that reads and writes the same `cards.json` as the desktop app. The library window reloads when that file changes.
+
+### CLI
+
+From this repo (Node 18+):
+
+```bash
+node cli/flashcapture.mjs --help
+# or: npm run cli -- --help
+```
+
+Add a card:
+
+```bash
+node cli/flashcapture.mjs cards add \
+  -q "What is Tauri?" \
+  -a "A toolkit for building native apps with a web frontend" \
+  --deck General \
+  --tags rust,tauri
+```
+
+Useful commands:
+
+```bash
+node cli/flashcapture.mjs decks list
+node cli/flashcapture.mjs cards list --search tauri
+node cli/flashcapture.mjs cards add -q "Question" -a "Answer"
+node cli/flashcapture.mjs data-dir
+```
+
+Optional install onto your `PATH`:
+
+```bash
+npm link
+flashcapture cards list
+```
+
+Point at another library with `--data-dir` or `FLASHCAPTURE_DATA_DIR`. Use the same directory the desktop app uses if you want live sync.
+
+### MCP server
+
+Start the stdio MCP server:
+
+```bash
+node cli/flashcapture.mjs mcp
+```
+
+Example Cursor / Claude Desktop / other MCP host config:
+
+```json
+{
+  "mcpServers": {
+    "flashcapture": {
+      "command": "node",
+      "args": ["/absolute/path/to/flash-capture/cli/flashcapture.mjs", "mcp"]
+    }
+  }
+}
+```
+
+Tools: `add_card`, `list_cards`, `get_card`, `update_card`, `delete_card`, `list_decks`, `add_deck`, `rename_deck`, `delete_deck`, `library_info`.
+
+If the desktop app is running, new cards show up in Library through the existing file watcher.
 
 ## Tray menu
 

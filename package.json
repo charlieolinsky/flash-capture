@@ -14,11 +14,17 @@
     "url": "https://github.com/charlieolinsky/flash-capture/issues"
   },
   "type": "module",
+  "bin": {
+    "flashcapture": "./cli/flashcapture.mjs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "cli": "node cli/flashcapture.mjs",
+    "mcp": "node cli/flashcapture.mjs mcp",
+    "test:cli": "node --test cli/*.test.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

@@ -2,6 +2,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { Deck, Settings, Store } from "../lib/types";
+import { ConfirmModal } from "./Modal";
 
 interface Props {
   settings: Settings;
@@ -22,6 +23,7 @@ export default function SettingsPanel({
   const [dataDir, setDataDir] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
 
   useEffect(() => {
     setHotkey(settings.hotkey);
@@ -137,14 +139,7 @@ export default function SettingsPanel({
           <button className="btn" onClick={() => void importJson(false)}>
             Import merge
           </button>
-          <button
-            className="btn"
-            onClick={() => {
-              if (confirm("Replace your entire library with the imported file?")) {
-                void importJson(true);
-              }
-            }}
-          >
+          <button className="btn" onClick={() => setConfirmReplace(true)}>
             Import replace
           </button>
         </div>
@@ -159,6 +154,20 @@ export default function SettingsPanel({
           Test Quick Capture
         </button>
       </div>
+
+      {confirmReplace && (
+        <ConfirmModal
+          title="Replace library"
+          message="Replace your entire library with the imported file? This cannot be undone."
+          confirmLabel="Choose file"
+          danger
+          onConfirm={async () => {
+            setConfirmReplace(false);
+            await importJson(true);
+          }}
+          onCancel={() => setConfirmReplace(false)}
+        />
+      )}
     </div>
   );
 }

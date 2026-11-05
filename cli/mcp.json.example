@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "flashcapture": {
+      "command": "node",
+      "args": ["/absolute/path/to/flash-capture/cli/flashcapture.mjs", "mcp"]
+    }
+  }
+}

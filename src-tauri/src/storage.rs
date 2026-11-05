@@ -1,8 +1,23 @@
 use crate::models::{Settings, Store};
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 fn app_dir() -> Result<PathBuf, String> {
+    resolve_app_dir(env::var("FLASHCAPTURE_DATA_DIR").ok())
+}
+
+/// Resolve the library directory. `FLASHCAPTURE_DATA_DIR` (when set and non-empty)
+/// overrides the platform default so the desktop app, CLI, and MCP share one store.
+pub fn resolve_app_dir(override_dir: Option<String>) -> Result<PathBuf, String> {
+    if let Some(custom) = override_dir {
+        let trimmed = custom.trim();
+        if !trimmed.is_empty() {
+            let dir = PathBuf::from(trimmed);
+            fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
+            return Ok(dir);
+        }
+    }
     let base = dirs::data_dir().ok_or_else(|| "Could not resolve app data directory".to_string())?;
     let dir = base.join("flashcapture");
     fs::create_dir_all(&dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
@@ -98,5 +113,20 @@ mod tests {
         assert_eq!(loaded.cards.len(), 1);
         assert_eq!(loaded.cards[0].question, "Q?");
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn resolve_app_dir_uses_override() {
+        let dir = env::temp_dir().join(format!("flashcapture-override-{}", Uuid::new_v4()));
+        let resolved = super::resolve_app_dir(Some(dir.to_string_lossy().to_string())).unwrap();
+        assert_eq!(resolved, dir);
+        assert!(dir.is_dir());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn resolve_app_dir_ignores_blank_override() {
+        let resolved = super::resolve_app_dir(Some("   ".into())).unwrap();
+        assert!(resolved.ends_with("flashcapture"));
     }
 }
