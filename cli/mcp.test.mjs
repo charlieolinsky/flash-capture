@@ -99,3 +99,44 @@ test("MCP initialize, list tools, and add_card", async () => {
     child.kill("SIGTERM");
   }
 });
+
+test("MCP accepts newline-delimited JSON (Grok framing)", async () => {
+  const dir = path.join(os.tmpdir(), `flashcapture-mcp-ndjson-${randomUUID()}`);
+  const child = spawn(process.execPath, [cli, "mcp", "--data-dir", dir], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  try {
+    child.stdin.write(
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-25",
+          capabilities: {},
+          clientInfo: { name: "test", version: "0" },
+        },
+      })}\n`,
+    );
+    const line = await new Promise((resolve, reject) => {
+      let buf = "";
+      const timer = setTimeout(() => reject(new Error("NDJSON initialize timed out")), 4000);
+      child.stdout.setEncoding("utf8");
+      child.stdout.on("data", (chunk) => {
+        buf += chunk;
+        const nl = buf.indexOf("\n");
+        if (nl !== -1) {
+          clearTimeout(timer);
+          resolve(buf.slice(0, nl));
+        }
+      });
+      child.on("error", reject);
+    });
+    const msg = JSON.parse(line);
+    assert.equal(msg.id, 1);
+    assert.equal(msg.result.serverInfo.name, "flashcapture");
+    assert.equal(msg.result.protocolVersion, "2025-11-25");
+  } finally {
+    child.kill("SIGTERM");
+  }
+});

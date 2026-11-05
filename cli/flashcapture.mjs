@@ -8,6 +8,7 @@
  *   node cli/flashcapture.mjs mcp
  */
 
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as lib from "./lib.mjs";
@@ -451,11 +452,17 @@ function callTool(name, args = {}) {
   }
 }
 
+let rpcFraming = "ndjson";
+
 function writeRpc(message) {
   const json = JSON.stringify(message);
-  const body = Buffer.from(json, "utf8");
-  process.stdout.write(`Content-Length: ${body.length}\r\n\r\n`);
-  process.stdout.write(body);
+  // Grok uses newline-delimited JSON; Claude Desktop and the TS SDK use Content-Length.
+  // Reply in whatever framing the last request used.
+  const payload =
+    rpcFraming === "content-length"
+      ? Buffer.from(`Content-Length: ${Buffer.byteLength(json, "utf8")}\r\n\r\n${json}`, "utf8")
+      : Buffer.from(`${json}\n`, "utf8");
+  fs.writeSync(1, payload);
 }
 
 function okResult(id, result) {
@@ -520,6 +527,7 @@ function handleRpc(message) {
 }
 
 async function runMcp() {
+  process.stdin.resume();
   let buf = Buffer.alloc(0);
   const processBuffer = () => {
     while (true) {
@@ -536,6 +544,7 @@ async function runMcp() {
         if (buf.length < start + len) return;
         const body = buf.subarray(start, start + len).toString("utf8");
         buf = buf.subarray(start + len);
+        rpcFraming = "content-length";
         handleRpc(JSON.parse(body));
         continue;
       }
@@ -546,7 +555,10 @@ async function runMcp() {
       const line = buf.subarray(0, nl).toString("utf8").trim();
       buf = buf.subarray(nl + 1);
       if (!line || line.startsWith("Content-Length:")) continue;
-      if (line.startsWith("{")) handleRpc(JSON.parse(line));
+      if (line.startsWith("{")) {
+        rpcFraming = "ndjson";
+        handleRpc(JSON.parse(line));
+      }
     }
   };
 
