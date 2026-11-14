@@ -27,9 +27,12 @@ func render(size: Int) -> NSBitmapImageRep {
   ctx.setAllowsAntialiasing(true)
   ctx.clear(CGRect(x: 0, y: 0, width: s, height: s))
 
-  // iOS/macOS app-icon corner radius: 22.37% of width.
-  let radius = max(s * 0.2237, 1)
-  let squircle = NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: s, height: s), xRadius: radius, yRadius: radius)
+  // Inset so the baked squircle matches Mail/Notes optical size in the Dock.
+  // A full-canvas tile reads larger because system icons sit slightly inside the slot.
+  let inset = s * 0.04
+  let tile = NSRect(x: inset, y: inset, width: s - inset * 2, height: s - inset * 2)
+  let radius = max(tile.width * 0.2237, 1)
+  let squircle = NSBezierPath(roundedRect: tile, xRadius: radius, yRadius: radius)
   squircle.addClip()
 
   NSColor(srgbRed: 47 / 255, green: 61 / 255, blue: 74 / 255, alpha: 1).setFill()
@@ -50,10 +53,10 @@ func render(size: Int) -> NSBitmapImageRep {
     options: []
   )
 
-  let boltHeight = s * (size <= 32 ? 0.50 : 0.44)
+  let boltHeight = tile.width * (size <= 32 ? 0.50 : 0.44)
   let boltWidth = boltHeight * 0.58
-  let cx = s * 0.50
-  let cy = s * 0.51
+  let cx = tile.midX
+  let cy = tile.midY + tile.height * 0.01
   let top = cy + boltHeight / 2
   let bottom = cy - boltHeight / 2
   let left = cx - boltWidth / 2
