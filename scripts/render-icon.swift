@@ -1,8 +1,10 @@
 import AppKit
 import Foundation
 
-// macOS/Windows app icon: full-bleed canvas (Dock applies the squircle).
-// Glyph is ~42% of the frame so it sits with other toolbar/Dock icons.
+// App icon that matches Dock / taskbar neighbors.
+// Tauri and unsigned local .app bundles often skip the system squircle mask,
+// so a full-bleed opaque square shows as a large sharp tile. Bake Apple's
+// ~22.37% continuous rounded square into the alpha channel instead.
 
 func render(size: Int) -> NSBitmapImageRep {
   let s = CGFloat(size)
@@ -23,16 +25,20 @@ func render(size: Int) -> NSBitmapImageRep {
   let ctx = NSGraphicsContext.current!.cgContext
   ctx.setShouldAntialias(true)
   ctx.setAllowsAntialiasing(true)
+  ctx.clear(CGRect(x: 0, y: 0, width: s, height: s))
 
-  // Brand slate, full bleed.
-  ctx.setFillColor(NSColor(srgbRed: 47 / 255, green: 61 / 255, blue: 74 / 255, alpha: 1).cgColor)
-  ctx.fill(CGRect(x: 0, y: 0, width: s, height: s))
+  // iOS/macOS app-icon corner radius: 22.37% of width.
+  let radius = max(s * 0.2237, 1)
+  let squircle = NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: s, height: s), xRadius: radius, yRadius: radius)
+  squircle.addClip()
 
-  // Subtle top light so it does not read as a flat CSS tile.
+  NSColor(srgbRed: 47 / 255, green: 61 / 255, blue: 74 / 255, alpha: 1).setFill()
+  squircle.fill()
+
   let gradient = CGGradient(
     colorsSpace: CGColorSpaceCreateDeviceRGB(),
     colors: [
-      NSColor(srgbRed: 58 / 255, green: 74 / 255, blue: 88 / 255, alpha: 0.55).cgColor,
+      NSColor(srgbRed: 58 / 255, green: 74 / 255, blue: 88 / 255, alpha: 0.45).cgColor,
       NSColor(srgbRed: 47 / 255, green: 61 / 255, blue: 74 / 255, alpha: 0).cgColor,
     ] as CFArray,
     locations: [0, 1]
@@ -40,12 +46,11 @@ func render(size: Int) -> NSBitmapImageRep {
   ctx.drawLinearGradient(
     gradient,
     start: CGPoint(x: s * 0.5, y: s),
-    end: CGPoint(x: s * 0.5, y: s * 0.35),
+    end: CGPoint(x: s * 0.5, y: s * 0.38),
     options: []
   )
 
-  // SF-like bolt.fill, optically centered. Small sizes need a larger glyph or it vanishes.
-  let boltHeight = s * (size <= 32 ? 0.54 : 0.42)
+  let boltHeight = s * (size <= 32 ? 0.50 : 0.44)
   let boltWidth = boltHeight * 0.58
   let cx = s * 0.50
   let cy = s * 0.51
@@ -55,25 +60,7 @@ func render(size: Int) -> NSBitmapImageRep {
   let right = cx + boltWidth / 2
   let midY = cy + boltHeight * 0.04
   let notch = boltWidth * 0.18
-  let r = max(s * 0.012, 1.2)
 
-  let path = CGMutablePath()
-  // Top point → inner right shoulder → outer right → bottom point → inner left → outer left
-  path.move(to: CGPoint(x: cx + boltWidth * 0.08, y: top))
-  path.addLine(to: CGPoint(x: cx - notch, y: midY + boltHeight * 0.06))
-  path.addLine(to: CGPoint(x: right, y: midY + boltHeight * 0.06))
-  path.addLine(to: CGPoint(x: cx - boltWidth * 0.06, y: bottom))
-  path.addLine(to: CGPoint(x: cx + notch, y: midY - boltHeight * 0.02))
-  path.addLine(to: CGPoint(x: left, y: midY - boltHeight * 0.02))
-  path.closeSubpath()
-
-  let rounded = path.copy(
-    strokingWithWidth: 0,
-    lineCap: .round,
-    lineJoin: .round,
-    miterLimit: 4
-  )
-  // Use a filled bezier with round joins via NSBezierPath
   let bp = NSBezierPath()
   bp.move(to: CGPoint(x: cx + boltWidth * 0.10, y: top))
   bp.line(to: CGPoint(x: cx - notch * 0.4, y: midY + boltHeight * 0.07))
@@ -84,13 +71,10 @@ func render(size: Int) -> NSBitmapImageRep {
   bp.close()
   bp.lineJoinStyle = .round
   bp.lineCapStyle = .round
-  bp.miterLimit = 2
 
   NSColor(srgbRed: 244 / 255, green: 243 / 255, blue: 239 / 255, alpha: 1).setFill()
   bp.fill()
 
-  _ = r
-  _ = rounded
   NSGraphicsContext.restoreGraphicsState()
   return rep
 }
@@ -113,8 +97,7 @@ let sizes: [(String, Int)] = [
 ]
 
 for (name, px) in sizes {
-  let rep = render(size: px)
-  let data = rep.representation(using: .png, properties: [:])!
+  let data = render(size: px).representation(using: .png, properties: [:])!
   try data.write(to: outDir.appendingPathComponent(name))
 }
 
