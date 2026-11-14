@@ -29,10 +29,4 @@ export const api = {
   importStoreFromPath: (path: string, replace: boolean) =>
     invoke<Store>("import_store_from_path", { path, replace }),
   getDataDir: () => invoke<string>("get_data_dir"),
-  triggerCapture: () => invoke<void>("trigger_capture"),
-  getPendingCapture: () =>
-    invoke<import("./types").CapturePayload | null>("get_pending_capture"),
-  clearPendingCapture: () => invoke<void>("clear_pending_capture"),
-  hideCaptureWindow: () => invoke<void>("hide_capture_window"),
-  reregisterHotkey: () => invoke<void>("reregister_hotkey"),
 };

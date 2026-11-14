@@ -4,7 +4,9 @@
   <img src="assets/flashcapture-logo.png" alt="FlashCapture logo" width="128" height="128" />
 </p>
 
-Lightweight desktop flashcards for learning while you work. Highlight text anywhere, hit a global hotkey, write a quick question, and save a card locally.
+A local flashcard library for coding agents. Grok Build, Claude Code, Copilot, and Cursor write cards from the current session. The desktop app is for browsing, editing, and quiz.
+
+All data stays on disk. No clipboard access, no Accessibility, no global hotkeys, no network.
 
 **macOS primary · MIT licensed**
 
@@ -12,58 +14,61 @@ Lightweight desktop flashcards for learning while you work. Highlight text anywh
 >
 > **Windows:** The app is written to target Windows as well as macOS, but **Windows builds and runtime behavior are untested** as of this release. macOS is the supported / verified platform today.
 
-## Features
+## Start here (agents)
 
-- **Quick Capture** — global hotkey treats your selection as the card **answer**, then opens a popup for the **question**
-- **Decks + tags** — organize, filter, and search
-- **Quiz** — flip cards and mark Knew / Didn't know
-- **Portable JSON** — export/import your library between machines
-- **Tray app** — stays in the menu bar; closing the window hides to tray
-- **Live sync** — library reloads when `cards.json` changes (CLI / other tools)
-- **CLI + MCP** — add and manage cards from a terminal or any MCP-capable agent
-
-## Requirements
-
-- [Node.js](https://nodejs.org/) 18+
-- [Rust](https://rustup.rs/) (stable)
-- macOS (verified). Windows may work via Tauri but is **untested**.
-
-### macOS Accessibility
-
-FlashCapture simulates `⌘C` to grab the current selection. Grant **Accessibility**:
-
-1. **System Settings → Privacy & Security → Accessibility**
-2. Enable **FlashCapture** (or your terminal / IDE when running `tauri dev`)
-
-Without Accessibility, capture falls back to the current clipboard contents.
-
-## Develop
+From a clone of this repo (Node 18+):
 
 ```bash
-git clone https://github.com/charlieolinsky/flash-capture.git
-cd flash-capture
 npm install
+node cli/flashcapture.mjs install-agents
+```
+
+That writes user-scope MCP config and copies `skills/flash-capture` for Grok Build and Claude Code. It merges FlashCapture into Cursor, VS Code / Copilot Chat, and Copilot CLI configs without replacing other servers.
+
+Then in a coding session run `/flash-capture` (or ask the agent to turn the session into cards). Cards land in local `cards.json`.
+
+Manual MCP (if you skip the installer):
+
+```json
+{
+  "mcpServers": {
+    "flashcapture": {
+      "command": "node",
+      "args": ["/absolute/path/to/flash-capture/cli/flashcapture.mjs", "mcp"]
+    }
+  }
+}
+```
+
+VS Code / Copilot Chat uses a top-level `servers` key and `"type": "stdio"` in the user `mcp.json`.
+
+Tools: `add_card`, `list_cards`, `get_card`, `update_card`, `delete_card`, `list_decks`, `add_deck`, `rename_deck`, `delete_deck`, `library_info`.
+
+## CLI
+
+```bash
+node cli/flashcapture.mjs cards add -q "What is Tauri?" -a "A toolkit for native webview apps" --deck General --tags rust
+node cli/flashcapture.mjs cards list --search tauri
+node cli/flashcapture.mjs data-dir
+```
+
+`FLASHCAPTURE_DATA_DIR` or `--data-dir` selects the library. The desktop app, CLI, and MCP share that directory. The library window reloads when `cards.json` changes.
+
+## Desktop library
+
+```bash
 npm run tauri dev
 ```
 
-Default capture hotkey: `CommandOrControl+Shift+F` (`⌘⇧F` on Mac, `Ctrl+Shift+F` on Windows).
-
-## Build
+Browse decks, search, edit, quiz (Knew / Didn't know), export and import JSON. Close quits.
 
 ```bash
 npm run tauri build
 ```
 
-Artifacts land under `src-tauri/target/release/bundle/`:
-
-| Platform | Output |
-|----------|--------|
-| macOS | `macos/FlashCapture.app`, `dmg/*.dmg` (verified) |
-| Windows | `.msi` / `.exe` when built on Windows (**untested**) |
+Artifacts land under `src-tauri/target/release/bundle/`.
 
 ## Data location
-
-Cards and settings are plain JSON in the OS app data directory:
 
 | OS | Path |
 |----|------|
@@ -71,13 +76,19 @@ Cards and settings are plain JSON in the OS app data directory:
 | Windows | `%APPDATA%\flashcapture\` |
 | Linux | `~/.local/share/flashcapture/` |
 
-Files:
-
 - `cards.json` — decks and cards
-- `settings.json` — hotkey, theme, default deck
+- `settings.json` — theme, default deck
 - `cards.json.bak` — previous write backup
 
-Override with `FLASHCAPTURE_DATA_DIR` (desktop app, CLI, and MCP all honor this).
+## What this binary does not do
+
+- Read or write the clipboard
+- Inject keystrokes or request Accessibility
+- Register global shortcuts
+- Open the network (no updater, no telemetry)
+- Run a menu-bar / tray resident
+
+It reads and writes JSON under the data directory, and uses the native file picker only for export/import.
 
 ## JSON schema (export)
 
@@ -104,80 +115,6 @@ Override with `FLASHCAPTURE_DATA_DIR` (desktop app, CLI, and MCP all honor this)
   ]
 }
 ```
-
-Use **Settings → Export JSON** / **Import merge** (or **Import replace**) to move libraries between devices.
-
-## Agent interface (CLI + MCP)
-
-The repo ships a Node CLI that reads and writes the same `cards.json` as the desktop app. The library window reloads when that file changes.
-
-### CLI
-
-From this repo (Node 18+):
-
-```bash
-node cli/flashcapture.mjs --help
-# or: npm run cli -- --help
-```
-
-Add a card:
-
-```bash
-node cli/flashcapture.mjs cards add \
-  -q "What is Tauri?" \
-  -a "A toolkit for building native apps with a web frontend" \
-  --deck General \
-  --tags rust,tauri
-```
-
-Useful commands:
-
-```bash
-node cli/flashcapture.mjs decks list
-node cli/flashcapture.mjs cards list --search tauri
-node cli/flashcapture.mjs cards add -q "Question" -a "Answer"
-node cli/flashcapture.mjs data-dir
-```
-
-Optional install onto your `PATH`:
-
-```bash
-npm link
-flashcapture cards list
-```
-
-Point at another library with `--data-dir` or `FLASHCAPTURE_DATA_DIR`. Use the same directory the desktop app uses if you want live sync.
-
-### MCP server
-
-Start the stdio MCP server:
-
-```bash
-node cli/flashcapture.mjs mcp
-```
-
-Example Cursor / Claude Desktop / other MCP host config:
-
-```json
-{
-  "mcpServers": {
-    "flashcapture": {
-      "command": "node",
-      "args": ["/absolute/path/to/flash-capture/cli/flashcapture.mjs", "mcp"]
-    }
-  }
-}
-```
-
-Tools: `add_card`, `list_cards`, `get_card`, `update_card`, `delete_card`, `list_decks`, `add_deck`, `rename_deck`, `delete_deck`, `library_info`.
-
-If the desktop app is running, new cards show up in Library through the existing file watcher.
-
-## Tray menu
-
-- **Open Library** — show the main window
-- **Quick Capture (clipboard)** — open capture with current clipboard text
-- **Quit** — exit the app
 
 ## Tech stack
 

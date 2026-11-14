@@ -17,7 +17,6 @@ export default function SettingsPanel({
   onSettingsChange,
   onStoreChange,
 }: Props) {
-  const [hotkey, setHotkey] = useState(settings.hotkey);
   const [theme, setTheme] = useState(settings.theme);
   const [defaultDeckId, setDefaultDeckId] = useState(settings.defaultDeckId || decks[0]?.id || "");
   const [dataDir, setDataDir] = useState("");
@@ -26,7 +25,6 @@ export default function SettingsPanel({
   const [confirmReplace, setConfirmReplace] = useState(false);
 
   useEffect(() => {
-    setHotkey(settings.hotkey);
     setTheme(settings.theme);
     setDefaultDeckId(settings.defaultDeckId || decks[0]?.id || "");
   }, [settings, decks]);
@@ -41,13 +39,11 @@ export default function SettingsPanel({
     try {
       const next: Settings = {
         ...settings,
-        hotkey: hotkey.trim() || "CommandOrControl+Shift+F",
         theme,
         defaultDeckId: defaultDeckId || null,
       };
       await onSettingsChange(next);
-      await api.reregisterHotkey();
-      setMessage("Settings saved. Hotkey re-registered.");
+      setMessage("Settings saved.");
     } catch (e) {
       setError(String(e));
     }
@@ -93,14 +89,8 @@ export default function SettingsPanel({
       {error && <p style={{ color: "var(--bad)" }}>{error}</p>}
 
       <div className="panel" style={{ padding: "1.35rem 1.45rem", marginBottom: "1.25rem" }}>
-        <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>Capture hotkey</h3>
-        <p className="muted" style={{ fontSize: "1rem", lineHeight: 1.55 }}>
-          Default is <code>CommandOrControl+Shift+F</code>. On macOS, grant Accessibility so FlashCapture can
-          simulate Copy for your selection. If you run via <code>npm run tauri dev</code>, enable Accessibility
-          for your <strong>terminal app</strong> (Terminal / iTerm / Cursor) as well as FlashCapture.
-        </p>
-        <input className="field" value={hotkey} onChange={(e) => setHotkey(e.target.value)} />
-        <div style={{ marginTop: "1rem" }}>
+        <h3 style={{ marginTop: 0, fontSize: "1.2rem" }}>Library</h3>
+        <div>
           <label className="muted field-label">
             Default deck
           </label>
@@ -150,9 +140,6 @@ export default function SettingsPanel({
         <p className="muted" style={{ fontSize: "1rem", wordBreak: "break-all", lineHeight: 1.5 }}>
           {dataDir}
         </p>
-        <button className="btn" onClick={() => void api.triggerCapture()}>
-          Test Quick Capture
-        </button>
       </div>
 
       {confirmReplace && (

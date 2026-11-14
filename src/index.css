@@ -366,6 +366,7 @@ button {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   height: 100%;
 }
 
@@ -446,9 +447,13 @@ button {
 
 .content {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
   overflow: auto;
   padding: 1.6rem 1.75rem 2.4rem;
   max-width: 72rem;
+  box-sizing: border-box;
 }
 
 @media (min-width: 1440px) {
@@ -485,7 +490,7 @@ button {
 
 .card-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.1rem;
   align-items: start;
   padding: 1.25rem 1.35rem;
@@ -493,6 +498,13 @@ button {
   border-radius: 16px;
   background: var(--bg-elevated);
   margin-bottom: 1rem;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.card-row > :first-child {
+  min-width: 0;
 }
 
 .card-row:hover {
@@ -504,12 +516,16 @@ button {
   font-size: 1.08rem;
   line-height: 1.45;
   margin-bottom: 0.45rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .card-preview {
   white-space: pre-wrap;
   font-size: 1rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .card-row-actions {

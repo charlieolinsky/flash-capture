@@ -29,7 +29,6 @@ export interface Store {
 }
 
 export interface Settings {
-  hotkey: string;
   defaultDeckId: string | null;
   lastUsedDeckId: string | null;
   theme: "system" | "light" | "dark" | string;
@@ -46,12 +45,6 @@ export interface UpsertCardInput {
 export interface UpsertDeckInput {
   id?: string;
   name: string;
-}
-
-export interface CapturePayload {
-  answer: string;
-  fromSelection: boolean;
-  notice?: string | null;
 }
 
 export type SortKey = "created" | "updated" | "forgot" | "reviewed";
