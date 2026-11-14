@@ -68,9 +68,8 @@ impl Default for Store {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct Settings {
-    pub hotkey: String,
     pub default_deck_id: Option<String>,
     pub last_used_deck_id: Option<String>,
     pub theme: String,
@@ -79,10 +78,6 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            #[cfg(target_os = "macos")]
-            hotkey: "CommandOrControl+Shift+F".to_string(),
-            #[cfg(not(target_os = "macos"))]
-            hotkey: "CommandOrControl+Shift+F".to_string(),
             default_deck_id: None,
             last_used_deck_id: None,
             theme: "system".to_string(),
@@ -112,12 +107,4 @@ pub struct UpsertDeckInput {
 pub struct ReviewInput {
     pub card_id: String,
     pub knew: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CapturePayload {
-    pub answer: String,
-    pub from_selection: bool,
-    pub notice: Option<String>,
 }

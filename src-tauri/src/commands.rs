@@ -3,7 +3,6 @@ use crate::models::{
 };
 use crate::storage;
 use chrono::Utc;
-use tauri::Manager;
 use uuid::Uuid;
 
 #[cfg(test)]
@@ -309,30 +308,4 @@ pub fn import_store(incoming: Store, replace: bool) -> Result<Store, String> {
 #[tauri::command]
 pub fn get_data_dir() -> Result<String, String> {
     storage::data_dir_path()
-}
-
-#[tauri::command]
-pub fn trigger_capture(app: tauri::AppHandle) -> Result<(), String> {
-    crate::capture::run_capture_flow(&app);
-    Ok(())
-}
-
-#[tauri::command]
-pub fn get_pending_capture() -> Option<crate::models::CapturePayload> {
-    // Peek so re-emits / remounts can still see it; cleared after successful save/hide.
-    crate::capture::peek_pending_payload()
-}
-
-#[tauri::command]
-pub fn clear_pending_capture() {
-    let _ = crate::capture::take_pending_payload();
-}
-
-#[tauri::command]
-pub fn hide_capture_window(app: tauri::AppHandle) -> Result<(), String> {
-    let _ = crate::capture::take_pending_payload();
-    if let Some(win) = app.get_webview_window("capture") {
-        win.hide().map_err(|e| format!("Failed to hide capture window: {e}"))?;
-    }
-    Ok(())
 }

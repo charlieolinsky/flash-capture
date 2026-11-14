@@ -25,7 +25,7 @@ function applyTheme(theme: string) {
 }
 
 function storeFingerprint(store: Store, settings: Settings): string {
-  return `${store.cards.length}:${store.decks.length}:${store.cards.map((c) => c.updatedAt).join(",")}:${settings.hotkey}:${settings.theme}`;
+  return `${store.cards.length}:${store.decks.length}:${store.cards.map((c) => c.updatedAt).join(",")}:${settings.theme}`;
 }
 
 export default function App() {
@@ -41,6 +41,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [dataDir, setDataDir] = useState("");
   const [clock, setClock] = useState<Date | null>(null);
   const [prompt, setPrompt] = useState<PromptState | null>(null);
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
@@ -72,6 +73,7 @@ export default function App() {
     refresh({ force: true })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
+    api.getDataDir().then(setDataDir).catch(() => setDataDir(""));
   }, [refresh]);
 
   useEffect(() => {
@@ -322,14 +324,12 @@ export default function App() {
           >
             {syncing ? "Refreshing…" : "Refresh library"}
           </button>
-          <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => void api.triggerCapture()}>
-            Quick Capture
-          </button>
           <p className="muted sidebar-meta">
-            {store.cards.length} cards · {settings.hotkey}
+            {store.cards.length} cards
             {clock
               ? ` · ${clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
               : ""}
+            {dataDir ? ` · ${dataDir}` : ""}
           </p>
         </div>
       </aside>
@@ -377,8 +377,8 @@ export default function App() {
                 <div className="empty">
                   <h3>No cards yet</h3>
                   <p>
-                    Highlight text anywhere and press <strong>{settings.hotkey}</strong>, or create a card
-                    manually.
+                    Run <code>/flash-capture</code> in Grok, Claude Code, or Copilot, use the CLI, or click New
+                    card.
                   </p>
                 </div>
               ) : (
