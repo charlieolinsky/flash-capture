@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as lib from "./lib.mjs";
+import { installAgents } from "./install.mjs";
 
 const VERSION = "0.1.0";
 
@@ -39,11 +40,13 @@ Shortcuts:
   list    same as cards list
 
 Agent:
-  mcp     Start an MCP server on stdio (same operations as tools)
+  mcp              Start an MCP server on stdio (same operations as tools)
+  install-agents   Write user MCP + skill files for Grok, Claude, Cursor, Copilot
 
 Global flags:
   --data-dir, -D <path>   Override FLASHCAPTURE_DATA_DIR
   --json                  Machine-readable JSON output
+  --dry-run               For install-agents, print paths without writing
   -h, --help              Show this help
   -V, --version           Print version
 
@@ -82,6 +85,9 @@ function parseArgs(argv) {
         break;
       case "--json":
         flags.json = true;
+        break;
+      case "--dry-run":
+        flags.dryRun = true;
         break;
       case "--replace":
         flags.replace = true;
@@ -165,6 +171,8 @@ function runCli(argv) {
     action = "list";
   } else if (group === "mcp") {
     return runMcp();
+  } else if (group === "install-agents") {
+    action = "";
   } else if (group === "export") {
     rest = action ? [action, ...rest] : rest;
     action = "";
@@ -183,6 +191,18 @@ function runCli(argv) {
       case "data-dir":
         print(dataDir, json);
         return;
+      case "install-agents": {
+        const result = installAgents({ dryRun: Boolean(flags.dryRun) });
+        if (json) print(result, true);
+        else {
+          process.stdout.write(`CLI ${result.cli}\n`);
+          for (const item of result.created) {
+            process.stdout.write(`${flags.dryRun ? "would write" : "wrote"} ${item.path}\n`);
+          }
+          for (const note of result.notes) process.stdout.write(`${note}\n`);
+        }
+        return;
+      }
       case "decks list": {
         const decks = lib.listDecks(dataDir);
         if (json) print(decks, true);
